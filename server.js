@@ -1,5 +1,6 @@
 const express = require("express");
 const multer = require("multer");
+const cors = require("cors");
 require("dotenv").config();
 
 const connect = require("./config/connect");
@@ -10,7 +11,6 @@ const tradeRoutes = require("./routes/tradeRoutes");
 const subAccountRoutes = require("./routes/subAccountRoutes");
 const gridTradingRoutes = require("./routes/GridTradingRoutes");
 const authRoutes = require("./routes/authRoutes");
-const protected = require("./utils/protected");
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -35,6 +35,7 @@ const fileFilter = (req, file, cb) => {
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(multer({storage : fileStorage, fileFilter : fileFilter}).single('image'))
 connect();
