@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const otpGenerator = require("otp-generator");
 const cloudinary = require("cloudinary").v2;
+const { validationResult } = require("express-validator");
 require("dotenv").config({ path: "../.env" });
 
 const User = require("../models/Users");
@@ -12,6 +13,13 @@ const User = require("../models/Users");
 // @route   /api/v1/register
 exports.register = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map((error) => error.msg);
+      const err = new Error(errorMessages);
+      err.statusCode = 422;
+      throw err;
+    }
     const { firstName, lastName, email, password } = await req.body;
 
     let user = await User.findOne({ email });
@@ -21,11 +29,15 @@ exports.register = async (req, res, next) => {
       throw err;
     }
 
-    const otp = await otpGenerator.generate(6, {
-      digits: true,
-      alphabets: false,
-      upperCase: false,
-    });
+    const generateOtp = () => {
+      const arr = [];
+      for (let i = 0; i < 5; i++) {
+        const randomNumber = Math.floor(Math.random() * 10);
+        arr.push(randomNumber.toString());
+      }
+      return arr;
+    };
+    const otp = generateOtp();
 
     const hashPassword = await bcryptjs.hash(password, 12);
     const otpExpiry = Date.now() + 60 * 60 * 1000;
@@ -44,7 +56,6 @@ exports.register = async (req, res, next) => {
       throw err;
     }
 
-    console.log(process.env.PASSWORD);
     let transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -70,7 +81,11 @@ exports.register = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      user,
+      user: {
+        firstName,
+        lastName,
+        email,
+      },
     });
   } catch (error) {
     next(error);
@@ -95,9 +110,10 @@ exports.confirmOtp = async (req, res, next) => {
     const token = jwt.sign({ id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-
+    otpString = otp.toString();
+    userOtp = user.otp.toString();
     if (
-      otp === user.otp &&
+      otpString === userOtp &&
       Date.now() < user.otpExpiry &&
       user.isEmailConfirmed === false
     ) {
@@ -110,20 +126,32 @@ exports.confirmOtp = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         message: "User confirmed",
-        user,
+        user: {
+          first: user.firstName,
+          last: user.lastName,
+          email: user.email,
+        },
       });
     } else if (otp === user.otp && Date.now() < user.otpExpiry) {
-      await User.findByIdAndUpdate(id, { $unset: { otp: "" } }, { new: true });
+      await User.findByIdAndUpdate(
+        id,
+        { $unset: { otp: "", otpExpiry: "" } },
+        { new: true }
+      );
       return res.status(200).json({
         success: true,
-        token
+        token,
+        user: {
+          first: user.firstName,
+          last: user.lastName,
+          email: user.email,
+        },
       });
     } else {
       const err = new Error("Otp doesn't match");
       err.statusCode = 421;
       throw err;
     }
-
   } catch (error) {
     next(error);
   }
@@ -134,6 +162,14 @@ exports.confirmOtp = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map((error) => error.msg);
+      const err = new Error(errorMessages);
+      err.statusCode = 422;
+      throw err;
+    }
+
     const { email, password } = await req.body;
     const user = await User.findOne({ email });
 
@@ -180,7 +216,6 @@ exports.profile = (req, res, next) => {
     user,
   });
 };
-
 
 // @method   post
 // @route   /api/v1/upload
@@ -245,7 +280,7 @@ exports.resetPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
-    console.log(user)
+    console.log(user);
     if (!user) {
       const err = new Error("No user found with this email");
       err.statusCode = 404;
@@ -258,8 +293,12 @@ exports.resetPassword = async (req, res, next) => {
       upperCase: false,
     });
 
-    const u = await User.findByIdAndUpdate(user._id, { $set: { otp : otp,otpExpiry: Date.now() + 60 * 60 * 1000 } }, { new: true });
-  
+    const u = await User.findByIdAndUpdate(
+      user._id,
+      { $set: { otp: otp, otpExpiry: Date.now() + 60 * 60 * 1000 } },
+      { new: true }
+    );
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -290,7 +329,6 @@ exports.resetPassword = async (req, res, next) => {
   }
 };
 
-
 // @method   POST
 // @route   /api/v1/changepassword
 
@@ -304,14 +342,18 @@ exports.changePassword = async (req, res, next) => {
       err.statusCode = 404;
       throw err;
     }
-    const hashPassword = await bcryptjs.hash(password,12);
-    if(password === confirmPassword) {
-      const pass = await User.findByIdAndUpdate(user._id,{password : hashPassword},{new : true})
+    const hashPassword = await bcryptjs.hash(password, 12);
+    if (password === confirmPassword) {
+      const pass = await User.findByIdAndUpdate(
+        user._id,
+        { password: hashPassword },
+        { new: true }
+      );
       res.status(200).json({
-        success : true,
-        message : 'Password Changed',
-        password : pass.password
-      })
+        success: true,
+        message: "Password Changed",
+        password: pass.password,
+      });
     }
   } catch (error) {
     next(error);

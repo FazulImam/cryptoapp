@@ -19,7 +19,7 @@ const userSchema = new mongooose.Schema(
       required: true,
     },
     imageUrl: String,
-    otp: String,
+    otp: [String],
     otpExpiry : Date,
     isEmailConfirmed: {
       type: Boolean,

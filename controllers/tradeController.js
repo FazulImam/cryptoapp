@@ -1,6 +1,6 @@
 const sign = require("../utils/Sign");
 const axios = require("axios");
-const fs = require("fs");
+const { validationResult } = require("express-validator");
 require("dotenv").config({ path: "../.env" });
 
 // @method   POST
@@ -35,13 +35,17 @@ exports.order = async (req, res, next) => {
       params: query,
     });
 
+    if (!response) {
+      const err = new Error("Resource not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
     res.json({
       data: response.data,
     });
   } catch (error) {
-    res.status("404").json({
-      success: false,
-    });
+    next(error);
   }
 };
 
@@ -49,283 +53,315 @@ exports.order = async (req, res, next) => {
 // @route   /api/v1/batch-orders
 
 exports.orderMany = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/batch-orders`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/batch-orders`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   POST
 // @route   /api/v1/cancel
 
 exports.cancelOrder = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/cancel-order`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/cancel-order`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   POST
 // @route   /api/v1/cancel-batch-orders
 
 exports.cancelManyOrder = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/cancel-batch-orders`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/cancel-batch-orders`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   POST
 // @route   /api/v1/amend-order
 
 exports.amendOrder = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/amend-order`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/amend-order`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   POST
 // @route   /api/v1/amend-batch-orders
 
 exports.amendBatchOrder = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/amend-batch-orders`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/amend-batch-orders`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   POST
 // @route   /api/v1/close-position
 
 exports.closePosition = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/close-position`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/close-position`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   POST
 // @route   /api/v1/order-details
 
 exports.orderDetails = async (req, res, next) => {
-  const { query, body } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  console.log(search);
-  const path = `/api/v5/trade/order`;
+  try {
+    const { query, body } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/order`;
 
-  const signature = await sign(
-    timestamp,
-    "POST",
-    path + search,
-    JSON.stringify(body)
-  );
+    const signature = await sign(
+      timestamp,
+      "POST",
+      path + search,
+      JSON.stringify(body)
+    );
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.post(`https://www.okx.com${path}`, body, {
-    headers,
-    params: query,
-  });
+    const response = await axios.post(`https://www.okx.com${path}`, body, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next();
+  }
 };
 
 // @method   GET
 // @route   /api/v1/order-pending
 
 exports.orderList = async (req, res, next) => {
-  const { query } = req;
-  const passPhrase = process.env.PASS;
-  const apiKey = process.env.API_KEY;
-  const timestamp = Date.now() / 1000;
-  const search = req._parsedUrl.search || "";
-  const path = `/api/v5/trade/orders-pending`;
+  try {
+    const { query } = req;
+    const passPhrase = process.env.PASS;
+    const apiKey = process.env.API_KEY;
+    const timestamp = Date.now() / 1000;
+    const search = req._parsedUrl.search || "";
+    const path = `/api/v5/trade/orders-pending`;
 
-  const signature = await sign(timestamp, "GET", path + search, "");
+    const signature = await sign(timestamp, "GET", path + search, "");
 
-  headers = {
-    "OK-ACCESS-KEY": `${apiKey}`,
-    "OK-ACCESS-SIGN": signature,
-    "OK-ACCESS-TIMESTAMP": timestamp,
-    "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
-  };
+    headers = {
+      "OK-ACCESS-KEY": `${apiKey}`,
+      "OK-ACCESS-SIGN": signature,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": `${passPhrase}`,
+    };
 
-  const response = await axios.get(`https://www.okx.com${path}`, {
-    headers,
-    params: query,
-  });
+    const response = await axios.get(`https://www.okx.com${path}`, {
+      headers,
+      params: query,
+    });
 
-  res.json({
-    data: response.data,
-  });
+    res.json({
+      data: response.data,
+    });
+  } catch (error) {
+    next();
+  }
 };
 
 // @method   GET
 // @route   /api/v1/order-history
 
 exports.orderHistoryWeek = async (req, res, next) => {
-  const { query } = req;
+  try {
+    const { query } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -349,13 +385,17 @@ exports.orderHistoryWeek = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // @method   GET
 // @route   /api/v1/order-history-archcive
 
 exports.orderHistoryMonth = async (req, res, next) => {
-  const { query } = req;
+  try {
+    const { query } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -379,6 +419,9 @@ exports.orderHistoryMonth = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error)
+  }
 };
 
 // @method   GET
@@ -386,7 +429,8 @@ exports.orderHistoryMonth = async (req, res, next) => {
 // @description  get last 3 days transaction detail
 
 exports.details = async (req, res, next) => {
-  const { query } = req;
+  try {
+    const { query } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -410,6 +454,9 @@ exports.details = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error)
+  }
 };
 
 // @method   GET
@@ -417,7 +464,8 @@ exports.details = async (req, res, next) => {
 // @description  get last 3 months transaction detail
 
 exports.detailsHistory = async (req, res, next) => {
-  const { query } = req;
+  try {
+    const { query } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -441,13 +489,17 @@ exports.detailsHistory = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error)
+  }
 };
 
 // @method   POST
 // @route   /api/v1/order-algo
 
 exports.orderAlgo = async (req, res, next) => {
-  const { query, body } = req;
+  try {
+    const { query, body } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -477,13 +529,17 @@ exports.orderAlgo = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error)
+  }
 };
 
 // @method   POST
 // @route   /api/v1/cancel-algos
 
 exports.cancelAlgo = async (req, res, next) => {
-  const { query, body } = req;
+  try {
+    const { query, body } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -513,13 +569,17 @@ exports.cancelAlgo = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error)
+  }
 };
 
 // @method   POST
 // @route   /api/v1/cancel-advance-algos
 
 exports.cancelAdvanceAlgo = async (req, res, next) => {
-  const { query, body } = req;
+  try {
+    const { query, body } = req;
   const passPhrase = process.env.PASS;
   const apiKey = process.env.API_KEY;
   const timestamp = Date.now() / 1000;
@@ -549,6 +609,9 @@ exports.cancelAdvanceAlgo = async (req, res, next) => {
   res.json({
     data: response.data,
   });
+  } catch (error) {
+    next(error)
+  }
 };
 
 // @method   GET
@@ -860,7 +923,6 @@ exports.oneClickRepay = async (req, res, next) => {
     });
   }
 };
-
 
 // @method   GET
 // @route   /api/v1/one-click-repay-currency-list
