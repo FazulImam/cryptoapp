@@ -1,10 +1,11 @@
 const express = require("express");
 const http = require("http");
-const {Server} = require("socket.io");
+const { Server } = require("socket.io");
 const socketIOclient = require("socket.io-client");
-const {WebsocketClient} = require("okx-api");
+const { WebsocketClient } = require("okx-api");
 const multer = require("multer");
 const cors = require("cors");
+const axios = require("axios");
 require("dotenv").config();
 
 const connect = require("./config/connect");
@@ -18,7 +19,7 @@ const authRoutes = require("./routes/authRoutes");
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null,'uploads');
+    cb(null, "uploads");
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname);
@@ -43,11 +44,24 @@ const io = new Server(server);
 
 app.use(cors());
 app.use(express.json());
-app.use(multer({storage : fileStorage, fileFilter : fileFilter}).single('image'))
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+);
 connect();
 
+app.get("/", async (req, res, next) => {
+  const response = await axios.get(
+    `https://www.okx.com/api/v5/market/tickers?instType=SPOT`
+  );
+  const data = response.data;
+  const tickers = data.data.map((ticker) => {
+    return {
+      channel: "tickers",
+      instId: ticker.instId,
+    };
+  });
 
-app.get("/", (req, res, next) => {
+  console.log(tickers)
   io.on("connection", (socket) => {
     // socket.on("Market", (arg) => {
     //   socket.broadcast.emit("Market", arg);
@@ -67,19 +81,8 @@ app.get("/", (req, res, next) => {
     //   instId: "BTC-USDT",
     // });
 
-    
     // Or an array of requests
-    wsClient.subscribe([
-      {
-        channel: 'tickers',
-        instId: 'LTC-BTC', 
-      },
-      {
-          channel: "tickers",
-          instId: "BTC-USDT",
-        }
-    ]);
-
+    wsClient.subscribe(tickers);
   });
 
   // const socket01 = socketIOclient("http://localhost:3000");
