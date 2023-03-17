@@ -24,7 +24,6 @@ exports.getTickers = async (req,res,next) => {
         count : response.data.data.length,
         data : response.data,
     })
-
 }
 
 // // method   GET

@@ -54,6 +54,7 @@ app.get("/", async (req, res, next) => {
     `https://www.okx.com/api/v5/market/tickers?instType=SPOT`
   );
   const data = response.data;
+
   const tickers = data.data.map((ticker) => {
     return {
       channel: "tickers",
@@ -61,59 +62,20 @@ app.get("/", async (req, res, next) => {
     };
   });
 
-  console.log(tickers)
   io.on("connection", (socket) => {
-    // socket.on("Market", (arg) => {
-    //   socket.broadcast.emit("Market", arg);
-    // });
-
     const wsClient = new WebsocketClient({
       market: "prod",
     });
     let message = "";
     wsClient.on("update", (data) => {
       message = JSON.stringify(data, null, 2);
+    
       socket.emit("Market", message);
     });
 
-    // wsClient.subscribe({
-    //   channel: "tickers",
-    //   instId: "BTC-USDT",
-    // });
-
-    // Or an array of requests
     wsClient.subscribe(tickers);
   });
-
-  // const socket01 = socketIOclient("http://localhost:3000");
-
-  // socket01.on("connect", () => {
-  //   console.log("Connected to server");
-
-  //   const wsClient = new WebsocketClient({
-  //     market: "prod",
-  //   });
-  //   let message = "";
-  //   wsClient.on("update", (data) => {
-  //     message = JSON.stringify(data, null, 2);
-  //     socket01.emit("Market", message);
-  //   });
-
-  //   wsClient.subscribe({
-  //     channel: "tickers",
-  //     instId: "BTC-USDT",
-  //   });
-  // });
-
-  // Socket 02
-  const socket02 = socketIOclient("http://localhost:3000");
-
-  socket02.on("connect", () => {
-    console.log("Connected to server");
-    socket02.on("Market", (data) => {
-      console.log("Received message:", data);
-    });
-  });
+res.json({data:tickers})
 });
 
 app.use("/api/v1/account", accountRoutes);
